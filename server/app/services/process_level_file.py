@@ -4,6 +4,9 @@ import math
 
 from ..helpers.math import is_square
 
+class ValidationException(Exception):
+    pass
+
 def unzip_level_files(file):
     words = []
     levels = []
@@ -15,8 +18,7 @@ def unzip_level_files(file):
             words = zf.read(fileinfo).decode('utf-8').splitlines()
 
         if (fileinfo.filename.startswith('levels/') and not fileinfo.is_dir()):
-            levels.append(zf.read(fileinfo).decode('utf-8')) 
-        # TODO when file not found throw error
+            levels.append((fileinfo.filename, zf.read(fileinfo).decode('utf-8'))) 
     
     return words, levels
 
@@ -24,28 +26,40 @@ def process_levels(words, levels):
     level_infos = []
 
     # transform to user like object
-    for level in levels:
-        chunks = level.split(' ')
+    for filename, level in levels:
+        level_info = {
+            'filename': filename,
+            'matrix': None,
+            'words': [],
+            "bonus_words": [],
+            "status": ''
+        }
 
-        level_summ = 0
+        try:
+            chunks = level.split(' ')
+            level_summ = 0
+            level_dict = {}
 
-        level_dict = {}
-        level_info = {'matrix': None, 'words': [], "bonus_words": []}
+            while len(chunks):
+                try:
+                    level_word = int(chunks.pop(0))
+                    level_path = list(map(lambda x: int(x), chunks.pop(0).split(';')))
+                    level_dict[level_word] = level_path
+                except:
+                    raise ValidationException('Incorrect format of decision')
 
-        while len(chunks):
-            level_word = int(chunks.pop(0))
-            level_path = list(map(lambda x: int(x), chunks.pop(0).split(';')))
-            level_dict[level_word] = level_path
+                level_summ += len(level_path)
 
-            # TODO validation here
-            level_summ += len(level_path)
+            if not is_square(level_summ):
+                raise ValidationException('Incorrect format of decision')
 
-
-        if is_square(level_summ):
             level_size = math.isqrt(level_summ)
             matrix = [['*' for col in range(level_size)] for row in range(level_size)]
 
             for word_index, path in level_dict.items():
+                if len(words) <= word_index:
+                    raise ValidationException('Cannot find word')
+
                 word = words[word_index]
 
                 level_info['words'].append(word)
@@ -54,8 +68,7 @@ def process_levels(words, levels):
 
                 for letter_index in path:
                     if letter_index >= level_summ:
-                        # TODO throw exception skip the level
-                        continue
+                        raise ValidationException('Wrong letter in decision')
 
                     i = letter_index // level_size
                     j = letter_index % level_size
@@ -64,8 +77,13 @@ def process_levels(words, levels):
                         matrix[i][j] = letter
 
                     except StopIteration:
-                        # TODO throw exception skip the level
-                        print('STOP ITERATION')
+                        raise ValidationException('Too short word')
             level_info['matrix'] = matrix
-            level_infos.append(level_info)
+            level_info['status'] = 'valid'
+
+        except ValidationException as e:
+            level_info['status'] = 'Error: ' + str(e)
+
+        level_infos.append(level_info)
+            
     return level_infos

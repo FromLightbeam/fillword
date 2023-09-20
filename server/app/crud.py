@@ -1,10 +1,7 @@
-import json
 from sqlalchemy import insert
 from sqlalchemy.orm import Session
 
-from .database import engine, SessionLocal
-
-from . import models, schemas
+from . import models
 
 
 def get_levels(db: Session, offset: int, limit: int):
@@ -22,11 +19,13 @@ def create_words(db: Session, words: list[str]):
     db.commit()
 
 
-def create_levels(db: Session, levels: list[str]):
+def create_levels(db: Session, levels):
     stmt = insert(models.Levels).values([{
         'matrix': level["matrix"],
         'words': level['words'],
         'bonus_words': [],
+        'status': level['status'],
+        'filename': level['filename'],
     } for level in levels]).prefix_with('OR IGNORE')
     db.execute(stmt)
     db.commit()

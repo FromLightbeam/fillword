@@ -12,6 +12,7 @@ class Levels(Base):
     __tablename__ = "levels"
 
     id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=True)
     matrix = Column(JSON, unique=True)
     status = Column(String, nullable=True)
     bonus_words = Column(JSON, nullable=True)

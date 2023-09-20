@@ -22,7 +22,8 @@ def upgrade() -> None:
     op.create_table(
         'levels',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('matrix', sa.JSON(), nullable=False, unique=True),
+        sa.Column('filename', sa.String(), nullable=True),
+        sa.Column('matrix', sa.JSON(), nullable=True),
         sa.Column('status', sa.String(), nullable=True),
         sa.Column('bonus_words', sa.JSON(), nullable=True),
         sa.Column('words', sa.JSON(), nullable=False)

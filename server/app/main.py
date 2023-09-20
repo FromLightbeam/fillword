@@ -1,9 +1,7 @@
-import json
-from fastapi import Depends, FastAPI, File
+from fastapi import Depends, FastAPI, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
-from .helpers.math import is_square
 from .services.process_level_file import process_levels, unzip_level_files
 from .services.finding_words import find_bonus
 from . import crud, models, schemas
@@ -38,11 +36,14 @@ def get_db():
 
 @app.post("/api/levels")
 async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_db)):
-    words, levels = unzip_level_files(file)
+    try:
+        words, levels = unzip_level_files(file)
+    except:
+        raise HTTPException(status_code=400, detail="Error while unzipping file")
 
     crud.create_words(db, words)
 
-    level_infos = process_levels(words, levels[:10])
+    level_infos = process_levels(words, levels)
 
     crud.create_levels(db, level_infos)
 
