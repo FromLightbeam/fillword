@@ -17,3 +17,7 @@ class LevelCreate(LevelBase):
 class Level(LevelBase):
     id: int
 
+
+class FindBonusBody(BaseModel):
+    limit: int
+    offset: int

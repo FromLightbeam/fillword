@@ -49,20 +49,21 @@ async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_
     return level_infos
 
 @app.post("/api/bonus")
-async def find_bonuses(db: Session = Depends(get_db)):
-    db_levels, level_infos = crud.get_levels(db)
+async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_db)):
+    db_levels = crud.get_levels(db, params.offset, params.limit)
     db_words = crud.get_words(db)
-    words = [db_word.word for db_word in db_words]
-    for level_info, db_level in zip(level_infos, db_levels):
-        bonus_words = find_bonus(words, level_info['matrix'], level_info['words'])
-        db_level.bonus = json.dumps(bonus_words)
-        level_info['bonus'] = bonus_words
+    all_words = [db_word.word for db_word in db_words]
+    for db_level in db_levels:
+        bonus_words = find_bonus(all_words, db_level.matrix, db_level.words)
+        db_level.bonus_words = bonus_words
     db.commit()
-    return level_infos
+
+    db_levels = crud.get_levels(db, params.offset, params.limit)
+    return db_levels
 
 @app.get("/api/levels")
-async def get_levels(db: Session = Depends(get_db)):
-    db_levels, level_infos = crud.get_levels(db)
+async def get_levels(offset: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    level_infos = crud.get_levels(db, offset, limit)
     return level_infos
 
 @app.get("/api/words")

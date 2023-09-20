@@ -12,7 +12,7 @@ class Levels(Base):
     __tablename__ = "levels"
 
     id = Column(Integer, primary_key=True, index=True)
-    path = Column(String, unique=True)
+    matrix = Column(JSON, unique=True)
     status = Column(String, nullable=True)
-    bonus = Column(String, nullable=True)
-    words = Column(String, nullable=True)
+    bonus_words = Column(JSON, nullable=True)
+    words = Column(JSON, nullable=True)
