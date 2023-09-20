@@ -1,3 +1,5 @@
+import itertools
+from multiprocessing import Pool
 from fastapi import Depends, FastAPI, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
@@ -46,14 +48,19 @@ async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_
 
     return list(filter(lambda level: level['status'] != 'valid', level_infos))
 
+def find_bonus_pfunc(params):
+    level, all_words = params
+    bonus_words = find_bonus(all_words, level.matrix, level.words)
+    level.bonus_words = bonus_words
+
 @app.post("/api/bonus")
 async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_db)):
     db_levels, total_count = crud.get_levels(db, params.offset, params.limit)
     db_words = crud.get_words(db)
     all_words = [db_word.word for db_word in db_words]
-    for db_level in db_levels:
-        bonus_words = find_bonus(all_words, db_level.matrix, db_level.words)
-        db_level.bonus_words = bonus_words
+
+    with Pool(8) as p:
+        p.map(find_bonus_pfunc, list(zip(db_levels, itertools.repeat(all_words))))
     db.commit()
 
     db_levels, total_count = crud.get_levels(db, params.offset, params.limit)

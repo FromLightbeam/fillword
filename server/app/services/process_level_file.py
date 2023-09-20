@@ -31,7 +31,7 @@ def process_levels(words, levels):
             'filename': filename,
             'matrix': None,
             'words': [],
-            "bonus_words": [],
+            "bonus_words": None,
             "status": ''
         }
 
