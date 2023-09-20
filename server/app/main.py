@@ -1,4 +1,6 @@
+import json
 from fastapi import Depends, FastAPI, File
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
 from .helpers.math import is_square
@@ -8,10 +10,19 @@ from . import crud, models, schemas
 from .database import SessionLocal, engine
 from sqlalchemy.orm import Session  
 
-
-import math
-
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -37,17 +48,22 @@ async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_
 
     return level_infos
 
-# @app.post("/api/bonus")
-# async def find_bonuses(db: Session = Depends(get_db)):
-#     db_levels = crud.get_levels(db)
-#     db_words = crud.get_words(db)
-#     words = [db_word.word for db_word in db_words]
-#     find_bonus()
+@app.post("/api/bonus")
+async def find_bonuses(db: Session = Depends(get_db)):
+    db_levels, level_infos = crud.get_levels(db)
+    db_words = crud.get_words(db)
+    words = [db_word.word for db_word in db_words]
+    for level_info, db_level in zip(level_infos, db_levels):
+        bonus_words = find_bonus(words, level_info['matrix'], level_info['words'])
+        db_level.bonus = json.dumps(bonus_words)
+        level_info['bonus'] = bonus_words
+    db.commit()
+    return level_infos
 
 @app.get("/api/levels")
 async def get_levels(db: Session = Depends(get_db)):
-    db_levels = crud.get_levels(db)
-    return db_levels
+    db_levels, level_infos = crud.get_levels(db)
+    return level_infos
 
 @app.get("/api/words")
 async def get_words(db: Session = Depends(get_db)):
