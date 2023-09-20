@@ -6,7 +6,8 @@ from . import models
 
 def get_levels(db: Session, offset: int, limit: int):
     db_levels = db.query(models.Levels).offset(offset).limit(limit).all()
-    return db_levels
+    total_count = db.query(models.Levels).count()
+    return db_levels, total_count
 
 
 def get_words(db: Session):

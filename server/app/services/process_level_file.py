@@ -18,7 +18,7 @@ def unzip_level_files(file):
             words = zf.read(fileinfo).decode('utf-8').splitlines()
 
         if (fileinfo.filename.startswith('levels/') and not fileinfo.is_dir()):
-            levels.append((fileinfo.filename, zf.read(fileinfo).decode('utf-8'))) 
+            levels.append((fileinfo.filename.replace('levels/', ''), zf.read(fileinfo).decode('utf-8'))) 
     
     return words, levels
 

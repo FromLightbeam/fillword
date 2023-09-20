@@ -22,9 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 models.Base.metadata.create_all(bind=engine)
-
 
 def get_db():
     db = SessionLocal()
@@ -44,14 +42,13 @@ async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_
     crud.create_words(db, words)
 
     level_infos = process_levels(words, levels)
-
     crud.create_levels(db, level_infos)
 
-    return level_infos
+    return list(filter(lambda level: level['status'] != 'valid', level_infos))
 
 @app.post("/api/bonus")
 async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_db)):
-    db_levels = crud.get_levels(db, params.offset, params.limit)
+    db_levels, total_count = crud.get_levels(db, params.offset, params.limit)
     db_words = crud.get_words(db)
     all_words = [db_word.word for db_word in db_words]
     for db_level in db_levels:
@@ -59,15 +56,10 @@ async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_
         db_level.bonus_words = bonus_words
     db.commit()
 
-    db_levels = crud.get_levels(db, params.offset, params.limit)
-    return db_levels
+    db_levels, total_count = crud.get_levels(db, params.offset, params.limit)
+    return { "levels": db_levels, "total_count": total_count }
 
 @app.get("/api/levels")
 async def get_levels(offset: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    level_infos = crud.get_levels(db, offset, limit)
-    return level_infos
-
-@app.get("/api/words")
-async def get_words(db: Session = Depends(get_db)):
-    db_words = crud.get_words(db)
-    return db_words
+    db_levels, total_count = crud.get_levels(db, offset, limit)
+    return { "levels": db_levels, "total_count": total_count }
