@@ -8,7 +8,7 @@ export const getLevels = ({ limit, offset } = { limit: 20, offset: 0 }) => {
 
 export const findBonuses = (setProgress, total) => {
   // TODO: make websocket connection
-  const size = 150;
+  const size = 300;
   return Promise.all(
     [...Array(total / size).keys()].map((index) => {
       return axios
@@ -19,4 +19,10 @@ export const findBonuses = (setProgress, total) => {
         .then(() => setProgress(progress => progress + (size / total) * 100));
     })
   );
+};
+
+export const createLevels = (values) => {
+  return axios
+    .post(`http://localhost:8000/api/levels`, values)
+    .then((res) => res.data);
 };

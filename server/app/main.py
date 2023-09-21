@@ -4,6 +4,8 @@ from fastapi import Depends, FastAPI, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 
+import requests
+
 from .services.process_level_file import process_levels, unzip_level_files
 from .services.finding_words import find_bonus
 from . import crud, models, schemas
@@ -35,9 +37,10 @@ def get_db():
 
 
 @app.post("/api/levels")
-async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_db)):
+async def create_levels_from_file(params: schemas.CreateLevelBody, db: Session = Depends(get_db)):
     try:
-        words, levels = unzip_level_files(file)
+        response = requests.get(params.url)
+        words, levels = unzip_level_files(response.content)
     except:
         raise HTTPException(status_code=400, detail="Error while unzipping file")
 
@@ -51,7 +54,7 @@ async def create_file(file: Annotated[bytes, File()], db: Session = Depends(get_
 def find_bonus_pfunc(params):
     level, all_words = params
     bonus_words = find_bonus(all_words, level.matrix, level.words)
-    level.bonus_words = bonus_words
+    return bonus_words
 
 @app.post("/api/bonus")
 async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_db)):
@@ -60,7 +63,9 @@ async def find_bonuses(params: schemas.FindBonusBody, db: Session = Depends(get_
     all_words = [db_word.word for db_word in db_words]
 
     with Pool(8) as p:
-        p.map(find_bonus_pfunc, list(zip(db_levels, itertools.repeat(all_words))))
+        bonus_words = p.map(find_bonus_pfunc, list(zip(db_levels, itertools.repeat(all_words))))
+    for bonus, db_level in zip(bonus_words, db_levels):
+        db_level.bonus_words = bonus
     db.commit()
 
     db_levels, total_count = crud.get_levels(db, params.offset, params.limit)

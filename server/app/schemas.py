@@ -21,3 +21,6 @@ class Level(LevelBase):
 class FindBonusBody(BaseModel):
     limit: int
     offset: int
+
+class CreateLevelBody(BaseModel):
+    url: str

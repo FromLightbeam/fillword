@@ -3,7 +3,7 @@ import "./App.css";
 import UploadButton from "./components/Upload";
 
 import LevelsList from "./components/LevelList";
-import { Button, Progress, Space, Spin } from "antd";
+import { Button, Card, Progress, Space, Spin } from "antd";
 import { findBonuses, getLevels } from "./utils/api";
 
 function App() {
@@ -27,18 +27,28 @@ function App() {
   return (
     <Space direction="vertical">
       <h1>Fillword Viewer</h1>
-      {levelData.levels.length ? <Progress percent={progress} /> : null}
-      <Space align="start" size={4}>
-        <UploadButton
-          onSuccessLoad={() => getLevels().then((levels) => setLevels(levels))}
-        />
-        <Button
-          disabled={!levelData.levels.length}
-          type="primary"
-          onClick={handleFindBonuses}
-        >
-          Find bonus words
-        </Button>
+      <Space direction="vertical" size={16}>
+        <Card>
+          <UploadButton
+            onSuccessLoad={() =>
+              getLevels().then((levels) => setLevels(levels))
+            }
+          />
+        </Card>
+
+        {levelData.levels.length ? (
+          <Card>
+            <Progress percent={progress} />
+
+            <Button
+              disabled={!levelData.levels.length}
+              type="primary"
+              onClick={handleFindBonuses}
+            >
+              Find bonus words
+            </Button>
+          </Card>
+        ) : null}
       </Space>
       <Spin tip="Loading" spinning={loading}>
         <LevelsList
