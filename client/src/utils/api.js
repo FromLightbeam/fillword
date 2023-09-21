@@ -1,8 +1,10 @@
 import axios from "axios";
 
+const backend = import.meta.env.VITE_BACKEND_URL
+
 export const getLevels = ({ limit, offset } = { limit: 20, offset: 0 }) => {
   return axios
-    .get(`http://localhost:8000/api/levels?limit=${limit}&offset=${offset}`)
+    .get(`${backend}/api/levels?limit=${limit}&offset=${offset}`)
     .then((res) => res.data);
 };
 
@@ -12,7 +14,7 @@ export const findBonuses = (setProgress, total) => {
   return Promise.all(
     [...Array(total / size).keys()].map((index) => {
       return axios
-        .post("http://localhost:8000/api/bonus", {
+        .post(`${backend}/api/bonus`, {
           offset: index * size,
           limit: size,
         })
@@ -23,6 +25,6 @@ export const findBonuses = (setProgress, total) => {
 
 export const createLevels = (values) => {
   return axios
-    .post(`http://localhost:8000/api/levels`, values)
+    .post(`${backend}/api/levels`, values)
     .then((res) => res.data);
 };
