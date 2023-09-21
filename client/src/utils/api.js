@@ -11,8 +11,9 @@ export const getLevels = ({ limit, offset } = { limit: 20, offset: 0 }) => {
 export const findBonuses = (setProgress, total) => {
   // TODO: make websocket connection
   const size = 300;
+  const reqNumber = total / size > 1 ? total / size : 1
   return Promise.all(
-    [...Array(total / size).keys()].map((index) => {
+    [...Array(reqNumber).keys()].map((index) => {
       return axios
         .post(`${backend}/api/bonus`, {
           offset: index * size,
